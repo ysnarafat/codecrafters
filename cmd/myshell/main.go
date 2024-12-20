@@ -10,18 +10,19 @@ import (
 var _ = fmt.Fprint
 
 func main() {
-	// Uncomment this block to pass the first stage
-	fmt.Fprint(os.Stdout, "$ ")
+	for {
+		fmt.Fprint(os.Stdout, "$ ")
 
-	// Wait for user input
-	input, error := bufio.NewReader(os.Stdin).ReadString('\n')
+		// Wait for user input
+		input, error := bufio.NewReader(os.Stdin).ReadString('\n')
 
-	if error != nil {
-		fmt.Println(error)
-		return
+		if error != nil {
+			fmt.Println(error)
+			return
+		}
+
+		message := input[:len(input)-1] + ": command not found 1"
+
+		fmt.Println(message)
 	}
-
-	message := input[:len(input)-1] + ": command not found"
-
-	fmt.Println(message)
 }
