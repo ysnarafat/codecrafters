@@ -21,7 +21,7 @@ func main() {
 			return
 		}
 
-		message := input[:len(input)-1] + ": command not found 1"
+		message := input[:len(input)-1] + ": command not found"
 
 		fmt.Println(message)
 	}
