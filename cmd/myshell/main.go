@@ -27,9 +27,18 @@ func main() {
 		if input == "exit 0" {
 			break
 		}
+	
+		if strings.HasPrefix(input, "echo ") {
+			echoMessage := strings.TrimSpace(strings.TrimPrefix(input, "echo "))
+			fmt.Println(echoMessage)
+			continue
+		}
 
-		message := input + ": command not found"
-
-		fmt.Println(message)
+		handleInvalidCommand(input)
 	}
+}
+
+func handleInvalidCommand(input string) {
+	message := input + ": command not found"
+	fmt.Println(message)
 }
