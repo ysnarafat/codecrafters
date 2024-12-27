@@ -89,7 +89,7 @@ func handleInvalidCommand(input string) {
 }
 
 func isValidCommand(str string) bool {
-	validCommands := []string{"echo", "exit", "type"}
+	validCommands := []string{"echo", "exit", "type", "pwd"}
 
 	for _, item := range validCommands {
 		if item == str {
