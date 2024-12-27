@@ -47,9 +47,10 @@ func main() {
 					fp := filepath.Join(path, commandType)
 					if _, err := os.Stat(fp); err == nil {
 						fmt.Printf("%s is %s\n", commandType, fp)
-						return
+						break
 					}
 				}
+				
 				fmt.Printf("%s: not found\n", commandType)
 			}
 
