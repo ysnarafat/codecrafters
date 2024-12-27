@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -40,7 +41,16 @@ func main() {
 			if isValidCommand(commandType) {
 				fmt.Println(commandType + " is a shell builtin")
 			} else {
-				fmt.Println(commandType + ": not found")
+				paths := strings.Split(os.Getenv("PATH"), ":")
+
+				for _, path := range paths {
+					fp := filepath.Join(path, commandType)
+					if _, err := os.Stat(fp); err == nil {
+						fmt.Println(fp)
+						return
+					}
+				}
+				fmt.Printf("%s: not found\n", commandType)
 			}
 
 			continue
@@ -58,11 +68,10 @@ func handleInvalidCommand(input string) {
 func isValidCommand(str string) bool {
 	validCommands := []string{"echo", "exit", "type"}
 
-    for _, item := range validCommands {
-        if item == str {
-            return true
-        }
-    }
-    return false
+	for _, item := range validCommands {
+		if item == str {
+			return true
+		}
+	}
+	return false
 }
-
