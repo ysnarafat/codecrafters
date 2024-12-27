@@ -48,6 +48,15 @@ func main() {
 			continue
 		}
 
+		if input == "pwd" {
+			pwd, err := os.Getwd()
+			if err == nil {
+				fmt.Println(pwd)
+			}
+
+			continue
+		}
+
 		handleInvalidCommand(input)
 	}
 }
