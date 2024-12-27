@@ -46,7 +46,7 @@ func main() {
 				for _, path := range paths {
 					fp := filepath.Join(path, commandType)
 					if _, err := os.Stat(fp); err == nil {
-						fmt.Println(fp)
+						fmt.Printf("%s is %s\n", commandType, fp)
 						return
 					}
 				}
