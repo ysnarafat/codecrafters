@@ -59,7 +59,13 @@ func main() {
 		}
 
 		if strings.HasPrefix(input, "cd ") {
-			os.Chdir(strings.TrimPrefix(input, "cd "))
+			changeToDirectory := strings.TrimPrefix(input, "cd ")
+			err := os.Chdir(changeToDirectory)
+
+			if err != nil {
+				fmt.Printf("cd: %s: No such file or directory\n", changeToDirectory)
+			}
+			
 			continue
 		}
 
