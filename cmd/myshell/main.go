@@ -41,17 +41,7 @@ func main() {
 			if isValidCommand(commandType) {
 				fmt.Println(commandType + " is a shell builtin")
 			} else {
-				paths := strings.Split(os.Getenv("PATH"), ":")
-
-				for _, path := range paths {
-					fp := filepath.Join(path, commandType)
-					if _, err := os.Stat(fp); err == nil {
-						fmt.Printf("%s is %s\n", commandType, fp)
-						break
-					}
-				}
-				
-				fmt.Printf("%s: not found\n", commandType)
+				handleBuiltInCommand(commandType)
 			}
 
 			continue
@@ -59,6 +49,20 @@ func main() {
 
 		handleInvalidCommand(input)
 	}
+}
+
+func handleBuiltInCommand(commandType string) {
+	paths := strings.Split(os.Getenv("PATH"), ":")
+
+	for _, path := range paths {
+		fp := filepath.Join(path, commandType)
+		if _, err := os.Stat(fp); err == nil {
+			fmt.Printf("%s is %s\n", commandType, fp)
+			return
+		}
+	}
+
+	fmt.Printf("%s: not found\n", commandType)
 }
 
 func handleInvalidCommand(input string) {
