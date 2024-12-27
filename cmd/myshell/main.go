@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -66,8 +67,16 @@ func handleBuiltInCommand(commandType string) {
 }
 
 func handleInvalidCommand(input string) {
-	message := input + ": command not found"
-	fmt.Println(message)
+	cmds := strings.Split(input, " ")
+	command := exec.Command(cmds[0], cmds[1:]...)
+
+	 command.Stderr = os.Stderr
+	 command.Stdout = os.Stdout
+
+	err := command.Run()
+	if err != nil {
+		fmt.Printf("%s: command not found\n", cmds[0])
+	}
 }
 
 func isValidCommand(str string) bool {
