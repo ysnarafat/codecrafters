@@ -11,6 +11,7 @@ import (
 
 // Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
 var _ = fmt.Fprint
+var validCommands = []string{"echo", "exit", "type", "pwd", "cd"}
 
 func main() {
 	for {
@@ -57,6 +58,11 @@ func main() {
 			continue
 		}
 
+		if strings.HasPrefix(input, "cd ") {
+			os.Chdir(strings.TrimPrefix(input, "cd "))
+			continue
+		}
+
 		handleInvalidCommand(input)
 	}
 }
@@ -79,8 +85,8 @@ func handleInvalidCommand(input string) {
 	cmds := strings.Split(input, " ")
 	command := exec.Command(cmds[0], cmds[1:]...)
 
-	 command.Stderr = os.Stderr
-	 command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+	command.Stdout = os.Stdout
 
 	err := command.Run()
 	if err != nil {
@@ -89,8 +95,6 @@ func handleInvalidCommand(input string) {
 }
 
 func isValidCommand(str string) bool {
-	validCommands := []string{"echo", "exit", "type", "pwd"}
-
 	for _, item := range validCommands {
 		if item == str {
 			return true
