@@ -60,12 +60,17 @@ func main() {
 
 		if strings.HasPrefix(input, "cd ") {
 			changeToDirectory := strings.TrimPrefix(input, "cd ")
+
+			if changeToDirectory == "~" {
+				changeToDirectory, _ = os.UserHomeDir()
+			}
+
 			err := os.Chdir(changeToDirectory)
 
 			if err != nil {
 				fmt.Printf("cd: %s: No such file or directory\n", changeToDirectory)
 			}
-			
+
 			continue
 		}
 
