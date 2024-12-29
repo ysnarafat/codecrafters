@@ -95,8 +95,6 @@ func main() {
 				}
 			}
 
-			fmt.Println()
-
 			continue
 		}
 
