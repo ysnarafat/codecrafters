@@ -84,14 +84,14 @@ func main() {
 
 		if strings.HasPrefix(input, "cat ") {
 			concatArgs := strings.TrimPrefix(input, "cat ")
-			args := strings.Split(concatArgs, " ")
+			args := parseQuotedStrings(concatArgs)
 
 			for _, item := range args {
 				item = strings.Trim(item, "'")
 				content, err := os.ReadFile(item)
 
 				if err == nil {
-					fmt.Printf("%s ", string(content))
+					fmt.Printf("%s", string(content))
 				}
 			}
 
@@ -102,6 +102,40 @@ func main() {
 
 		handleInvalidCommand(input)
 	}
+}
+
+func parseQuotedStrings(input string) []string {
+	var result []string
+	var current string
+	inQuotes := false
+
+	for i := 0; i < len(input); i++ {
+		char := input[i]
+
+		switch char {
+		case '\'':
+			inQuotes = !inQuotes            // Toggle quote state
+			if !inQuotes && current != "" { // If closing quote and current is not empty
+				result = append(result, current)
+				current = ""
+			}
+		case ' ':
+			if inQuotes {
+				current += string(char) // Preserve spaces within quotes
+			} else if current != "" {
+				result = append(result, current) // Add to result if not in quotes and not empty
+				current = ""
+			}
+		default:
+			current += string(char) // Build the current filename or text
+		}
+	}
+
+	if current != "" { // Add any remaining text after loop ends
+		result = append(result, current)
+	}
+
+	return result
 }
 
 func handleBuiltInCommand(commandType string) {
