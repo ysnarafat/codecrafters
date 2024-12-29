@@ -11,7 +11,7 @@ import (
 
 // Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
 var _ = fmt.Fprint
-var validCommands = []string{"echo", "exit", "type", "pwd", "cd", "cat"}
+var validCommands = []string{"echo", "exit", "type", "pwd", "cd"}
 
 func main() {
 	for {
