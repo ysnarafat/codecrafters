@@ -32,8 +32,16 @@ func main() {
 		}
 
 		if strings.HasPrefix(input, "echo ") {
-			echoMessage := strings.TrimSpace(strings.TrimPrefix(input, "echo "))
-			fmt.Println(strings.Trim(echoMessage, "'"))
+			content := strings.TrimSpace(strings.TrimPrefix(input, "echo "))
+
+			if strings.HasPrefix(content, "'") && strings.HasSuffix(content, "'") {
+				content = content[1 : len(content)-1]
+			} else {
+				words := strings.Fields(content) // This will handle multiple spaces
+				content = strings.Join(words, " ")
+			}
+
+			fmt.Println(content)
 			continue
 		}
 
