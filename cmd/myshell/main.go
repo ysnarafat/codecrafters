@@ -11,7 +11,7 @@ import (
 
 // Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
 var _ = fmt.Fprint
-var validCommands = []string{"echo", "exit", "type", "pwd", "cd"}
+var validCommands = []string{"echo", "exit", "type", "pwd", "cd", "cat"}
 
 func main() {
 	for {
@@ -33,7 +33,7 @@ func main() {
 
 		if strings.HasPrefix(input, "echo ") {
 			echoMessage := strings.TrimSpace(strings.TrimPrefix(input, "echo "))
-			fmt.Println(echoMessage)
+			fmt.Println(strings.Trim(echoMessage, "'"))
 			continue
 		}
 
@@ -70,6 +70,24 @@ func main() {
 			if err != nil {
 				fmt.Printf("cd: %s: No such file or directory\n", changeToDirectory)
 			}
+
+			continue
+		}
+
+		if strings.HasPrefix(input, "cat ") {
+			concatArgs := strings.TrimPrefix(input, "cat ")
+			args := strings.Split(concatArgs, " ")
+
+			for _, item := range args {
+				item = strings.Trim(item, "'")
+				content, err := os.ReadFile(item)
+
+				if err == nil {
+					fmt.Printf("%s ", string(content))
+				}
+			}
+
+			fmt.Println()
 
 			continue
 		}
