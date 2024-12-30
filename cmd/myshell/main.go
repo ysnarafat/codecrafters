@@ -37,8 +37,13 @@ func main() {
 			if strings.HasPrefix(content, "'") && strings.HasSuffix(content, "'") {
 				content = content[1 : len(content)-1]
 			} else {
-				words := strings.Fields(content) // This will handle multiple spaces
-				content = strings.Join(words, " ")
+				if strings.HasPrefix(content, "\"") {
+					stringsToPrint := parseDoubleQuotedStrings(content)
+					content = strings.Join(stringsToPrint, " ")
+				} else {
+					words := strings.Fields(content) // This will handle multiple spaces
+					content = strings.Join(words, " ")
+				}
 			}
 
 			fmt.Println(content)
@@ -84,7 +89,14 @@ func main() {
 
 		if strings.HasPrefix(input, "cat ") {
 			concatArgs := strings.TrimPrefix(input, "cat ")
-			args := parseQuotedStrings(concatArgs)
+
+			var args []string
+
+			if strings.HasPrefix(concatArgs, "'") {
+				args = parseSingleQuotedStrings(concatArgs)
+			} else {
+				args = parseDoubleQuotedStrings(concatArgs)
+			}
 
 			for _, item := range args {
 				item = strings.Trim(item, "'")
@@ -102,7 +114,40 @@ func main() {
 	}
 }
 
-func parseQuotedStrings(input string) []string {
+func parseDoubleQuotedStrings(input string) []string {
+	var result []string
+	var current strings.Builder
+	inQuotes := false
+
+	for i := 0; i < len(input); i++ {
+		char := input[i]
+
+		switch char {
+		case '"':
+			inQuotes = !inQuotes // Toggle quotes
+		case ' ':
+			if inQuotes {
+				current.WriteByte(char) // Keep spaces inside quotes
+			} else {
+				if current.Len() > 0 {
+					result = append(result, current.String())
+					current.Reset()
+				}
+			}
+		default:
+			current.WriteByte(char)
+		}
+	}
+
+	// Add any remaining characters to the result
+	if current.Len() > 0 {
+		result = append(result, current.String())
+	}
+
+	return result
+}
+
+func parseSingleQuotedStrings(input string) []string {
 	var result []string
 	var current string
 	inQuotes := false
