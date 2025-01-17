@@ -41,8 +41,14 @@ func main() {
 					stringsToPrint := parseDoubleQuotedStrings(content)
 					content = strings.Join(stringsToPrint, " ")
 				} else {
-					words := strings.Fields(content) // This will handle multiple spaces
-					content = strings.Join(words, " ")
+
+					if !strings.Contains("\\", content) {
+						words := strings.Fields(content) // This will handle multiple spaces
+						content = strings.Join(words, " ")
+					}
+
+					content = strings.ReplaceAll(content, "\\ ", " ")
+					content = strings.ReplaceAll(content, "\\", "")
 				}
 			}
 
