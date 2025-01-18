@@ -105,22 +105,52 @@ func main() {
 
 func handleEchoCommand(input string) []string {
 	var result []string
-	content := strings.TrimSpace(strings.TrimPrefix(input, "echo "))
+	input = strings.TrimSpace(strings.TrimPrefix(input, "echo "))
 
-	re := regexp.MustCompile(`'[^']*'|"[^"]*"|\S+`)
 
-	matches := re.FindAllString(content, -1)
+		if strings.Contains(input, "\"") {
 
-	for _, match := range matches {
-		if (match[0] == '\'' && match[len(match)-1] == '\'') || (match[0] == '"' && match[len(match)-1] == '"') {
-			result = append(result, match[1:len(match)-1])
-		} else if match[0] == '\\' {
-			result = append(result, "")
+			re := regexp.MustCompile("\"(.*?)\"")
+
+			result = re.FindAllString(input, -1)
+
+			for i := range result {
+
+				result[i] = strings.Trim(result[i], "\"")
+
+			}
+
+		} else if strings.Contains(input, "'") {
+
+			re := regexp.MustCompile("'(.*?)'")
+
+			result = re.FindAllString(input, -1)
+
+			for i := range result {
+
+				result[i] = strings.Trim(result[i], "'")
+
+			}
+
 		} else {
-			result = append(result, strings.ReplaceAll(match, "\\", ""))
+			if strings.Contains(input, "\\") {
+
+				re := regexp.MustCompile(`[^\\] +`)
+
+				result = re.Split(input, -1)
+
+				for i := range result {
+
+					result[i] = strings.ReplaceAll(result[i], "\\", "")
+
+				}
+
+			} else {
+				result = strings.Fields(input)
+			}
 		}
-	}
-	// stringsToPrint := parseDoubleQuotedStrings(content)
+		
+		//sringsToPrint := parseDoubleQuotedStrings(content)
 	// content = strings.Join(stringsToPrint, " ")
 	// stringsToPrint = parseSingleQuotedStrings(content)
 	// content = strings.Join(stringsToPrint, " ")
