@@ -2,287 +2,240 @@ package main
 
 import (
 	"bufio"
+
 	"fmt"
+
+	"log"
+
 	"os"
+
 	"os/exec"
-	"path/filepath"
+
+	"path"
+
 	"regexp"
+
+	"strconv"
+
 	"strings"
 )
 
-// Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
-var _ = fmt.Fprint
-var validCommands = []string{"echo", "exit", "type", "pwd", "cd"}
-
 func main() {
+
 	for {
+
+		// Uncomment this block to pass the first stage
+
 		fmt.Fprint(os.Stdout, "$ ")
 
 		// Wait for user input
-		input, error := bufio.NewReader(os.Stdin).ReadString('\n')
 
-		if error != nil {
-			fmt.Println(error)
-			return
+		s, err := bufio.NewReader(os.Stdin).ReadString('\n')
+
+		if err != nil {
+
+			log.Fatal(err)
+
 		}
 
-		input = strings.TrimSpace(input)
+		s = strings.Trim(s, "\r\n")
 
-		if input == "exit 0" {
-			break
-		}
+		var args []string
 
-		if strings.HasPrefix(input, "echo ") {
-			result := handleEchoCommand(input)
-			content := strings.Join(result, " ")
-			fmt.Println(content)
-			continue
-		}
+		command, argstr, _ := strings.Cut(s, " ")
 
-		if strings.HasPrefix(input, "type ") {
-			commandType := strings.TrimSpace(strings.TrimPrefix(input, "type "))
-
-			if isValidCommand(commandType) {
-				fmt.Println(commandType + " is a shell builtin")
-			} else {
-				handleBuiltInCommand(commandType)
-			}
-
-			continue
-		}
-
-		if input == "pwd" {
-			pwd, err := os.Getwd()
-			if err == nil {
-				fmt.Println(pwd)
-			}
-
-			continue
-		}
-
-		if strings.HasPrefix(input, "cd ") {
-			changeToDirectory := strings.TrimPrefix(input, "cd ")
-
-			if changeToDirectory == "~" {
-				changeToDirectory, _ = os.UserHomeDir()
-			}
-
-			err := os.Chdir(changeToDirectory)
-
-			if err != nil {
-				fmt.Printf("cd: %s: No such file or directory\n", changeToDirectory)
-			}
-
-			continue
-		}
-
-		if strings.HasPrefix(input, "cat ") {
-			concatArgs := strings.TrimPrefix(input, "cat ")
-
-			var args []string
-
-			if strings.HasPrefix(concatArgs, "'") {
-				args = parseSingleQuotedStrings(concatArgs)
-			} else {
-				args = parseDoubleQuotedStrings(concatArgs)
-			}
-
-			for _, item := range args {
-				item = strings.Trim(item, "'")
-				content, err := os.ReadFile(item)
-
-				if err == nil {
-					fmt.Printf("%s", string(content))
-				}
-			}
-
-			continue
-		}
-
-		handleInvalidCommand(input)
-	}
-}
-
-func handleEchoCommand(input string) []string {
-	var result []string
-	input = strings.TrimSpace(strings.TrimPrefix(input, "echo "))
-
-
-		if strings.Contains(input, "\"") {
+		if strings.Contains(s, "\"") {
 
 			re := regexp.MustCompile("\"(.*?)\"")
 
-			result = re.FindAllString(input, -1)
+			args = re.FindAllString(s, -1)
 
-			for i := range result {
+			for i := range args {
 
-				result[i] = strings.Trim(result[i], "\"")
+				args[i] = strings.Trim(args[i], "\"")
 
 			}
 
-		} else if strings.Contains(input, "'") {
+		} else if strings.Contains(s, "'") {
 
 			re := regexp.MustCompile("'(.*?)'")
 
-			result = re.FindAllString(input, -1)
+			args = re.FindAllString(s, -1)
 
-			for i := range result {
+			for i := range args {
 
-				result[i] = strings.Trim(result[i], "'")
+				args[i] = strings.Trim(args[i], "'")
 
 			}
 
 		} else {
-			if strings.Contains(input, "\\") {
+
+			if strings.Contains(argstr, "\\") {
 
 				re := regexp.MustCompile(`[^\\] +`)
 
-				result = re.Split(input, -1)
+				args = re.Split(argstr, -1)
 
-				for i := range result {
+				for i := range args {
 
-					result[i] = strings.ReplaceAll(result[i], "\\", "")
+					args[i] = strings.ReplaceAll(args[i], "\\", "")
 
 				}
 
 			} else {
-				result = strings.Fields(input)
+
+				args = strings.Fields(argstr)
+
 			}
+
 		}
-		
-		//sringsToPrint := parseDoubleQuotedStrings(content)
-	// content = strings.Join(stringsToPrint, " ")
-	// stringsToPrint = parseSingleQuotedStrings(content)
-	// content = strings.Join(stringsToPrint, " ")
 
-	// if strings.Con(content, "'") && strings.HasSuffix(content, "'") {
-	// 	stringsToPrint := parseSingleQuotedStrings(content)
-	// 	content = strings.Join(stringsToPrint, " ")
-	// } else {
-	// 	if strings.HasPrefix(content, "\"") {
-	// 		stringsToPrint := parseDoubleQuotedStrings(content)
-	// 		content = ""
+		switch command {
 
-	// 		var result []string
-	// 		for _, item := range stringsToPrint {
-	// 			item = strings.Trim(item, "'")
-	// 			result = append(result, item)
-	// 		}
+		case "cd":
 
-	// 		content = strings.Join(result, " ")
-	// 	} else {
+			if args[0] == "~" {
 
-	// 		if !strings.Contains("\\", content) {
-	// 			words := strings.Fields(content) // This will handle multiple spaces
-	// 			content = strings.Join(words, " ")
-	// 		}
+				args[0] = os.Getenv("HOME")
 
-	// 		content = strings.ReplaceAll(content, "\\ ", " ")
-	// 		content = strings.ReplaceAll(content, "\\", "")
-	// 	}
-	// }
-	return result
-}
+			}
 
-func parseDoubleQuotedStrings(input string) []string {
-	var result []string
-	var current strings.Builder
-	inQuotes := false
+			if err := os.Chdir(args[0]); os.IsNotExist(err) {
 
-	for i := 0; i < len(input); i++ {
-		char := input[i]
+				fmt.Println(command + ": " + args[0] + ": No such file or directory")
 
-		switch char {
-		case '"':
-			inQuotes = !inQuotes // Toggle quotes
-		case ' ':
-			if inQuotes {
-				current.WriteByte(char) // Keep spaces inside quotes
-			} else {
-				if current.Len() > 0 {
-					result = append(result, current.String())
-					current.Reset()
+				break
+
+			} else if err != nil {
+
+				log.Fatal(err)
+
+			}
+
+		case "echo":
+
+			fmt.Println(strings.Join(args, " "))
+
+		case "exit":
+
+			n, err := strconv.Atoi(args[0])
+
+			if err != nil {
+
+				log.Fatal(err)
+
+			}
+
+			os.Exit(n)
+
+		case "pwd":
+
+			dir, err := os.Getwd()
+
+			if err != nil {
+
+				log.Fatal(err)
+
+			}
+
+			fmt.Println(dir)
+
+		case "type":
+
+			var isBuiltin bool
+
+			var isExecutable bool
+
+			var cmdPath string
+
+			builtin := []string{"cd", "echo", "exit", "pwd", "type"}
+
+			for _, cmd := range builtin {
+
+				if args[0] == cmd {
+
+					isBuiltin = true
+
+					break
+
 				}
+
 			}
+
+			var separator string
+
+			pathVar := os.Getenv("PATH")
+
+			if strings.Contains(pathVar, ";") {
+
+				separator = ";"
+
+			} else {
+
+				separator = ":"
+
+			}
+
+			dirs := strings.Split(pathVar, separator)
+
+			for _, dir := range dirs {
+
+				_, err = os.Stat(path.Join(dir, args[0]))
+
+				if err == nil {
+
+					isExecutable = true
+
+					cmdPath = path.Join(dir, args[0])
+
+					break
+
+				}
+
+			}
+
+			if isBuiltin {
+
+				fmt.Println(args[0] + " is a shell builtin")
+
+			} else if isExecutable {
+
+				fmt.Println(args[0] + " is " + cmdPath)
+
+			} else {
+
+				fmt.Println(args[0] + ": not found")
+
+			}
+
 		default:
-			current.WriteByte(char)
-		}
-	}
 
-	// Add any remaining characters to the result
-	if current.Len() > 0 {
-		result = append(result, current.String())
-	}
+			_, err = exec.LookPath(command)
 
-	return result
-}
+			if err != nil {
 
-func parseSingleQuotedStrings(input string) []string {
-	var result []string
-	var current string
-	inQuotes := false
+				fmt.Println(command + ": command not found")
 
-	for i := 0; i < len(input); i++ {
-		char := input[i]
+				break
 
-		switch char {
-		case '\'':
-			inQuotes = !inQuotes            // Toggle quote state
-			if !inQuotes && current != "" { // If closing quote and current is not empty
-				result = append(result, current)
-				current = ""
 			}
-		case ' ':
-			if inQuotes {
-				current += string(char) // Preserve spaces within quotes
-			} else if current != "" {
-				result = append(result, current) // Add to result if not in quotes and not empty
-				current = ""
+
+			cmd := exec.Command(command, args...)
+
+			cmd.Stdin = os.Stdin
+
+			cmd.Stdout = os.Stdout
+
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Run(); err != nil {
+
+				log.Fatal(err)
+
 			}
-		default:
-			current += string(char) // Build the current filename or text
+
 		}
+
 	}
 
-	if current != "" { // Add any remaining text after loop ends
-		result = append(result, current)
-	}
-
-	return result
-}
-
-func handleBuiltInCommand(commandType string) {
-	paths := strings.Split(os.Getenv("PATH"), ":")
-
-	for _, path := range paths {
-		fp := filepath.Join(path, commandType)
-		if _, err := os.Stat(fp); err == nil {
-			fmt.Printf("%s is %s\n", commandType, fp)
-			return
-		}
-	}
-
-	fmt.Printf("%s: not found\n", commandType)
-}
-
-func handleInvalidCommand(input string) {
-	cmds := strings.Split(input, " ")
-	command := exec.Command(cmds[0], cmds[1:]...)
-
-	command.Stderr = os.Stderr
-	command.Stdout = os.Stdout
-
-	err := command.Run()
-	if err != nil {
-		fmt.Printf("%s: command not found\n", cmds[0])
-	}
-}
-
-func isValidCommand(str string) bool {
-	for _, item := range validCommands {
-		if item == str {
-			return true
-		}
-	}
-	return false
 }
