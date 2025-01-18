@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -32,26 +33,8 @@ func main() {
 		}
 
 		if strings.HasPrefix(input, "echo ") {
-			content := strings.TrimSpace(strings.TrimPrefix(input, "echo "))
-
-			if strings.HasPrefix(content, "'") && strings.HasSuffix(content, "'") {
-				content = content[1 : len(content)-1]
-			} else {
-				if strings.HasPrefix(content, "\"") {
-					stringsToPrint := parseDoubleQuotedStrings(content)
-					content = strings.Join(stringsToPrint, " ")
-				} else {
-
-					if !strings.Contains("\\", content) {
-						words := strings.Fields(content) // This will handle multiple spaces
-						content = strings.Join(words, " ")
-					}
-
-					content = strings.ReplaceAll(content, "\\ ", " ")
-					content = strings.ReplaceAll(content, "\\", "")
-				}
-			}
-
+			result := handleEchoCommand(input)
+			content := strings.Join(result, " ")
 			fmt.Println(content)
 			continue
 		}
@@ -118,6 +101,57 @@ func main() {
 
 		handleInvalidCommand(input)
 	}
+}
+
+func handleEchoCommand(input string) []string {
+	var result []string
+	content := strings.TrimSpace(strings.TrimPrefix(input, "echo "))
+
+	re := regexp.MustCompile(`'[^']*'|"[^"]*"|\S+`)
+
+	matches := re.FindAllString(content, -1)
+
+	for _, match := range matches {
+		if (match[0] == '\'' && match[len(match)-1] == '\'') || (match[0] == '"' && match[len(match)-1] == '"') {
+			result = append(result, match[1:len(match)-1])
+		} else if match[0] == '\\' {
+			result = append(result, "")
+		} else {
+			result = append(result, strings.ReplaceAll(match, "\\", ""))
+		}
+	}
+	// stringsToPrint := parseDoubleQuotedStrings(content)
+	// content = strings.Join(stringsToPrint, " ")
+	// stringsToPrint = parseSingleQuotedStrings(content)
+	// content = strings.Join(stringsToPrint, " ")
+
+	// if strings.Con(content, "'") && strings.HasSuffix(content, "'") {
+	// 	stringsToPrint := parseSingleQuotedStrings(content)
+	// 	content = strings.Join(stringsToPrint, " ")
+	// } else {
+	// 	if strings.HasPrefix(content, "\"") {
+	// 		stringsToPrint := parseDoubleQuotedStrings(content)
+	// 		content = ""
+
+	// 		var result []string
+	// 		for _, item := range stringsToPrint {
+	// 			item = strings.Trim(item, "'")
+	// 			result = append(result, item)
+	// 		}
+
+	// 		content = strings.Join(result, " ")
+	// 	} else {
+
+	// 		if !strings.Contains("\\", content) {
+	// 			words := strings.Fields(content) // This will handle multiple spaces
+	// 			content = strings.Join(words, " ")
+	// 		}
+
+	// 		content = strings.ReplaceAll(content, "\\ ", " ")
+	// 		content = strings.ReplaceAll(content, "\\", "")
+	// 	}
+	// }
+	return result
 }
 
 func parseDoubleQuotedStrings(input string) []string {
