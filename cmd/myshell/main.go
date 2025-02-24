@@ -88,8 +88,19 @@ func main() {
 			}
 
 			for _, item := range args {
-				item = strings.Trim(item, "'")
-				content, err := os.ReadFile(item)
+				//items := strings.Split(item, "'")
+				// var path string = ""
+				// for _, ch := range item {
+				// 	strings.Re
+				// }
+
+				path := item
+				//path := strings.ReplaceAll(item, "'", "")
+
+				//path := handleEchoCommand(item)
+				//fmt.Println(path)
+
+				content, err := os.ReadFile(path)
 
 				if err == nil {
 					fmt.Printf("%s", string(content))
@@ -107,11 +118,29 @@ func handleEchoCommand(input string) string {
 	printAble := input
 	splitter := " "
 	printAbleTemp := ""
+	inSingleQuote := false
+	inDoubleQuote := false
 
 	if strings.HasPrefix(printAble, "'") && strings.HasSuffix(printAble, "'") {
 		splitter = "'"
+		inSingleQuote = true
 	} else if strings.HasPrefix(printAble, "\"") && strings.HasSuffix(printAble, "\"") {
 		splitter = "\""
+		inDoubleQuote = true
+	}
+
+	if(!(inSingleQuote || inDoubleQuote)) {
+		if(strings.Contains(printAble, "\\")) {
+			return strings.ReplaceAll(printAble, "\\", "")
+		}
+
+		items := strings.Split(printAble, " ")
+
+		filteredItems := Filter(items, func(s string) bool {
+			return s != ""
+		})
+
+		return strings.TrimSpace(strings.Join(filteredItems, " "))
 	}
 
 	if splitter != " " {
@@ -124,10 +153,6 @@ func handleEchoCommand(input string) string {
 	for _, subStr := range strings.Split(printAble, splitter) {
 		if subStr != "" {
 			str := subStr
-
-			if strings.Contains(str, "\\") {
-				str = strings.ReplaceAll(str, "\\", "")
-			}
 
 			// fmt.Printf("str: %s\n", str)
 
@@ -142,6 +167,16 @@ func handleEchoCommand(input string) string {
 	}
 
 	return strings.TrimSpace(printAbleTemp)
+}
+
+func Filter[T any](slice []T, condition func(T) bool) []T {
+	var result []T
+	for _, v := range slice {
+		if condition(v) {
+			result = append(result, v)
+		}
+	}
+	return result
 }
 
 func parseDoubleQuotedStrings(input string) []string {
